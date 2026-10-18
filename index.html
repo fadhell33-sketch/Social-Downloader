@@ -1,0 +1,156 @@
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Social Downloader</title>
+<style>
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: Tahoma, Arial;
+  background: #101827;
+  color: white;
+  text-align: center;
+}
+header {
+  padding: 35px 15px;
+  background: #172338;
+}
+h1 { color: #38bdf8; }
+.container {
+  max-width: 520px;
+  margin: 35px auto;
+  padding: 25px;
+}
+.card {
+  background: #1e293b;
+  padding: 25px;
+  border-radius: 18px;
+}
+input, select, button {
+  width: 100%;
+  padding: 15px;
+  margin: 10px 0;
+  border: none;
+  border-radius: 10px;
+  font-size: 16px;
+}
+input, select {
+  background: white;
+  color: #111;
+}
+button {
+  background: #22c55e;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+}
+button:disabled { opacity: .5; }
+#result {
+  margin-top: 20px;
+  overflow-wrap: anywhere;
+}
+a { color: #38bdf8; }
+footer {
+  margin-top: 40px;
+  color: #94a3b8;
+}
+</style>
+</head>
+<body>
+
+<header>
+<h1>⬇️ Social Downloader</h1>
+<p>تحميل الفيديوهات بسهولة</p>
+</header>
+
+<div class="container">
+<div class="card">
+
+<h2>ضع رابط الفيديو</h2>
+
+<input id="url" type="url"
+placeholder="الصق رابط الفيديو هنا">
+
+<select id="quality">
+<option value="best">أفضل جودة</option>
+<option value="720">جودة 720p</option>
+<option value="480">جودة 480p</option>
+</select>
+
+<button id="download" onclick="downloadVideo()">
+تحميل الفيديو ⬇️
+</button>
+
+<div id="result"></div>
+
+</div>
+</div>
+
+<footer>
+<p>Social Downloader © 2026</p>
+</footer>
+
+<script>
+async function downloadVideo() {
+  const url = document.getElementById("url").value.trim();
+  const quality = document.getElementById("quality").value;
+  const result = document.getElementById("result");
+  const button = document.getElementById("download");
+
+  if (!url) {
+    result.textContent = "⚠️ الرجاء إدخال رابط الفيديو";
+    return;
+  }
+
+  try {
+    const parsed = new URL(url);
+    if (!["http:", "https:"].includes(parsed.protocol)) {
+      throw new Error("رابط غير صالح");
+    }
+  } catch {
+    result.textContent = "⚠️ الرابط غير صالح";
+    return;
+  }
+
+  button.disabled = true;
+  result.textContent = "⏳ جاري تجهيز الفيديو...";
+
+  try {
+    const response = await fetch("/api/download", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ url, quality })
+    });
+
+    if (!response.ok) {
+      throw new Error("تعذر تجهيز الفيديو");
+    }
+
+    const data = await response.json();
+
+    if (!data.downloadUrl) {
+      throw new Error("لم يتم العثور على رابط تحميل");
+    }
+
+    const link = document.createElement("a");
+    link.href = data.downloadUrl;
+    link.textContent = "⬇️ اضغط هنا لتحميل الفيديو";
+    link.rel = "noopener noreferrer";
+
+    result.replaceChildren(link);
+  } catch (error) {
+    result.textContent =
+      "❌ التحميل غير متاح حتى يتم ربط الموقع بخادم التحميل.";
+  } finally {
+    button.disabled = false;
+  }
+}
+</script>
+
+</body>
+</html>
